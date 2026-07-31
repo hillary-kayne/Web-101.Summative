@@ -1,0 +1,65 @@
+name: Deploy to ReThread servers
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  WEB01: 52.207.253.107
+  WEB02: 100.53.143.147
+  LB01: 32.192.238.247
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$WEB01" "$WEB02" "$LB01" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Ship code to web-01 and web-02
+        run: |
+          for host in "$WEB01" "$WEB02"; do
+            echo "::group::rsync -> $host"
+            rsync -az --delete \
+              -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+              --exclude 'backend/venv' --exclude 'backend/.env' \
+              backend frontend deploy "ubuntu@$host:/opt/rethread/"
+            echo "::endgroup::"
+          done
+
+      - name: Install deps and restart app on web-01 and web-02
+        run: |
+          for host in "$WEB01" "$WEB02"; do
+            echo "::group::restart $host"
+            ssh -i ~/.ssh/deploy_key "ubuntu@$host" '
+              set -e
+              cd /opt/rethread/backend
+              venv/bin/pip install -q -r requirements.txt
+              sudo systemctl restart rethread
+              sleep 2
+              curl -sf localhost:8000/healthz
+            '
+            echo "::endgroup::"
+          done
+
+      - name: Push load balancer config to lb-01
+        run: |
+          scp -i ~/.ssh/deploy_key deploy/haproxy.cfg "ubuntu@$LB01:/tmp/haproxy.cfg"
+          ssh -i ~/.ssh/deploy_key "ubuntu@$LB01" '
+            set -e
+            sudo cp /tmp/haproxy.cfg /etc/haproxy/haproxy.cfg
+            sudo haproxy -c -f /etc/haproxy/haproxy.cfg
+            sudo systemctl reload haproxy
+          '
+
+      - name: End-to-end health check through the load balancer
+        run: |
+          sleep 2
+          curl -sf "http://$LB01/healthz"

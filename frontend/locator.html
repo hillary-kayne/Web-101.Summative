@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Locator — ReThread</title>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .locator-topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    background: var(--linen-card);
+    flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1 1 320px; max-width: 420px; }
+  #suggestions {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lift);
+    z-index: 500;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+  }
+  #suggestions button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  #suggestions button:hover { background: var(--linen); }
+
+  .locator-body { flex: 1; display: flex; overflow: hidden; }
+  .filter-rail {
+    width: 230px;
+    flex-shrink: 0;
+    padding: 18px 16px;
+    border-right: 1px solid var(--border-soft);
+    background: var(--linen-card);
+    overflow-y: auto;
+  }
+  .filter-rail h4 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--denim-500); margin: 18px 0 8px; }
+  .filter-rail h4:first-child { margin-top: 0; }
+  .type-check { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.9rem; }
+  .type-check input { width: auto; }
+  #map { flex: 1; }
+  .results-col {
+    width: 300px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border-soft);
+    background: var(--linen-card);
+    overflow-y: auto;
+    padding: 10px;
+  }
+  .result-card {
+    background: #fff;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .result-card:hover { border-color: var(--thread-gold); }
+  .result-card .name { font-weight: 700; margin-bottom: 2px; }
+  .badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-top: 4px;
+  }
+  .badge-bin { background: rgba(74,93,125,0.15); color: var(--denim-700); }
+  .badge-charity_shop { background: rgba(184,132,46,0.18); color: var(--thread-gold-dark); }
+  .badge-secondhand_store { background: rgba(82,107,79,0.18); color: var(--moss-dark); }
+  #status-banner { margin: 10px; }
+  @media (max-width: 900px) {
+    .results-col { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="locator-topbar">
+  <a href="/" class="brand" style="font-size:1.1rem;">Re<span class="stitch">Thread</span></a>
+  <div class="search-wrap">
+    <input type="text" id="city-input" placeholder="Search a city (e.g. Manchester, UK)" autocomplete="off">
+    <div id="suggestions"></div>
+  </div>
+  <button class="btn btn-outline btn-sm" id="use-location-btn">📍 Use my location</button>
+  <a href="/auth.html" class="btn btn-primary btn-sm" style="margin-left:auto;">My log</a>
+</div>
+
+<div class="locator-body">
+  <aside class="filter-rail">
+    <h4>Show</h4>
+    <label class="type-check"><input type="checkbox" class="type-filter" value="bin" checked> Recycling bins</label>
+    <label class="type-check"><input type="checkbox" class="type-filter" value="charity_shop" checked> Charity shops</label>
+    <label class="type-check"><input type="checkbox" class="type-filter" value="secondhand_store" checked> Second-hand stores</label>
+
+    <h4>Radius</h4>
+    <select id="radius-select">
+      <option value="2">2 km</option>
+      <option value="5" selected>5 km</option>
+      <option value="10">10 km</option>
+      <option value="25">25 km</option>
+      <option value="50">50 km</option>
+    </select>
+
+    <h4>Sort by</h4>
+    <select id="sort-select">
+      <option value="distance">Distance</option>
+      <option value="rating">Rating</option>
+    </select>
+
+    <h4>Note</h4>
+    <p class="muted" style="font-size:0.78rem;">
+      Whether a place pays for drop-offs isn't reliably available from map data, so it isn't shown here.
+      That comes from what people log after visiting. See your <a href="/log.html">personal log</a>.
+    </p>
+  </aside>
+
+  <div id="map"></div>
+
+  <div class="results-col" id="results-col">
+    <div id="status-banner"></div>
+    <div id="results-list"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="/js/api.js"></script>
+<script src="/js/locator.js"></script>
+</body>
+</html>

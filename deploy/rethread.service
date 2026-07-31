@@ -1,0 +1,16 @@
+[Unit]
+Description=ReThread Flask app (gunicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/rethread/backend
+EnvironmentFile=/opt/rethread/backend/.env
+ExecStart=/opt/rethread/backend/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:8000 wsgi:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReThread — find real drop-off points, track what your clothes were worth</title>
+<meta name="description" content="Find real nearby recycling bins, charity shops and second-hand stores, then track what you earned or saved by not binning your clothes.">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  .hero {
+    padding: 46px 24px 10px;
+  }
+  .hero-grid {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 44px;
+    align-items: center;
+  }
+  .hero h1 { font-size: clamp(2rem, 4vw, 2.9rem); margin-bottom: 0.4em; }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+  #landing-map {
+    height: 380px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-lift);
+  }
+  .map-caption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: var(--denim-500);
+  }
+  .pulse-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--moss);
+    margin-right: 6px;
+  }
+  .section { padding: 60px 24px; }
+  .section-narrow { max-width: 780px; margin: 0 auto; }
+  .three-col {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .three-col .card { padding: 22px; }
+  .method-box {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--linen-card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 34px;
+  }
+  .method-figures {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 20px 0;
+  }
+  .method-figures .fig {
+    background: rgba(82, 107, 79, 0.07);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+  }
+  .fig .num { font-family: var(--font-head); font-size: 1.6rem; color: var(--moss-dark); }
+  .cta-final {
+    text-align: center;
+    background: var(--denim-900);
+    color: var(--linen);
+    border-radius: var(--radius-lg);
+    max-width: 1180px;
+    margin: 0 auto 60px;
+    padding: 54px 24px;
+  }
+  .cta-final h2 { color: var(--linen); }
+  .cta-final .btn-outline { color: var(--linen); border-color: rgba(242,236,224,0.5); }
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .three-col { grid-template-columns: 1fr; }
+    .method-figures { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/" class="brand">Re<span class="stitch">Thread</span></a>
+  <div class="nav-links">
+    <a href="/locator.html" class="btn btn-outline btn-sm">Find drop-off points</a>
+    <a href="/auth.html" class="btn btn-primary btn-sm">Log in / Sign up</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-grid">
+    <div>
+      <p class="eyebrow">Clothes you don't wear, put to use</p>
+      <h1>Find real drop-off points near you, and see what your bag of clothes was actually worth.</h1>
+      <p class="muted" style="font-size:1.05rem;">
+        ReThread finds real nearby recycling bins, charity shops and second-hand stores on a live map,
+        then turns every drop-off into two numbers: what you earned, and the water and CO2 that wasn't
+        spent making a replacement.
+      </p>
+      <div class="hero-actions">
+        <a href="/locator.html" class="btn btn-gold">Search the locator, no login needed</a>
+        <a href="/auth.html" class="btn btn-outline">Sign up to track your log</a>
+      </div>
+    </div>
+    <div>
+      <div id="landing-map"></div>
+      <div class="map-caption">
+        <span><span class="pulse-dot"></span>Live map. Try it in the locator</span>
+        <span>Manchester, UK sample</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="three-col">
+    <div class="card">
+      <h3>1. Find a real place</h3>
+      <p class="muted">Search your city or share your location. We geocode it and pull real nearby bins, charity shops and second-hand stores, not a static list.</p>
+    </div>
+    <div class="card">
+      <h3>2. Drop it off</h3>
+      <p class="muted">Sell wearable pieces to a consignment or thrift shop, or hand unwearable textiles to a recycler that pays by weight.</p>
+    </div>
+    <div class="card">
+      <h3>3. Watch it add up</h3>
+      <p class="muted">Log each item once and your personal totals grow: cash earned, and water/CO2 avoided versus buying new.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="method-box">
+    <p class="eyebrow">About the numbers</p>
+    <h2 style="margin-bottom:0.3em;">What "water/CO2 saved" actually means</h2>
+    <p class="muted">
+      These are <strong>avoided-impact estimates</strong>, not a measurement of your specific t-shirt or jeans.
+      They represent the gap between two scenarios: a brand-new replacement garment being manufactured from
+      raw fiber (growing cotton, spinning, weaving, dyeing, shipping) versus your old garment being reused or
+      recycled instead, which skips most of that. Different studies land on different per-kg figures because
+      life-cycle assessments vary by fiber and methodology. That's normal, which is why we name one specific
+      source rather than presenting a number as universal fact.
+    </p>
+    <div class="method-figures">
+      <div class="fig">
+        <div class="num">4.0 kg CO2e / kg</div>
+        <div class="muted" style="font-size:0.85rem;">avoided per kg of clothing <strong>resold/reused</strong></div>
+      </div>
+      <div class="fig">
+        <div class="num">0.7 kg CO2e / kg</div>
+        <div class="muted" style="font-size:0.85rem;">avoided per kg of clothing <strong>recycled</strong></div>
+      </div>
+    </div>
+    <p class="muted" style="font-size:0.85rem;">
+      Source: WRAP UK, <em>Textiles 2030 Annual Progress Update 2022-23</em> (2023). Water figures are derived
+      the same way. See the full methodology note next to your totals once you're logging items. Figures are
+      rounded estimates for education, not precise measurements.
+      <a href="https://www.wrap.ngo/resources/report/textiles-2030-annual-progress-update-2022-23" target="_blank" rel="noopener">Read the source →</a>
+    </p>
+  </div>
+</section>
+
+<div class="cta-final">
+  <h2>Your bag of clothes is worth more than a bin trip.</h2>
+  <p style="opacity:0.85;">Find where to take it, then see what it added up to.</p>
+  <div class="hero-actions" style="justify-content:center;">
+    <a href="/locator.html" class="btn btn-gold">Open the locator</a>
+    <a href="/auth.html" class="btn btn-outline">Start your log</a>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <p>
+    Place data via <a href="https://www.geoapify.com/" target="_blank" rel="noopener">Geoapify</a>.
+    Impact estimates via <a href="https://www.wrap.ngo/resources/report/textiles-2030-annual-progress-update-2022-23" target="_blank" rel="noopener">WRAP UK, Textiles 2030 (2023)</a>.
+  </p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  const map = L.map('landing-map', { zoomControl: false, attributionControl: false }).setView([53.4808, -2.2426], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  const sample = [
+    { lat: 53.4808, lon: -2.2426, name: "Oxfam Bookshop", type: "Charity shop" },
+    { lat: 53.4848, lon: -2.2380, name: "Textile recycling bank", type: "Bin" },
+    { lat: 53.4770, lon: -2.2500, name: "Vintage & Vinyl Exchange", type: "Second-hand store" },
+    { lat: 53.4830, lon: -2.2300, name: "British Heart Foundation", type: "Charity shop" },
+  ];
+  sample.forEach(p => {
+    L.marker([p.lat, p.lon]).addTo(map).bindPopup(`<strong>${p.name}</strong><br>${p.type}`);
+  });
+</script>
+</body>
+</html>

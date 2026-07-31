@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My log — ReThread</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .log-wrap { max-width: 1080px; margin: 0 auto; padding: 30px 24px 80px; }
+
+  .totals-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0 34px;
+  }
+  .total-card {
+    padding: 30px 28px;
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+  }
+  .total-card.earned { background: linear-gradient(135deg, #2c2110, var(--denim-900)); color: #fff; }
+  .total-card.saved { background: linear-gradient(135deg, #1c2a1b, var(--denim-900)); color: #fff; }
+  .total-card .eyebrow { color: rgba(255,255,255,0.65); }
+  .total-card .figure { font-family: var(--font-head); font-size: 2.6rem; margin: 6px 0; }
+  .total-card.earned .figure { color: #e8b95e; }
+  .total-card.saved .figure { color: #90b98c; }
+  .total-card .sub { font-size: 0.85rem; opacity: 0.8; }
+  .total-card .info-tip { background: rgba(255,255,255,0.15); color: #fff; }
+  .total-card .info-tip .tip-bubble { background: #fff; color: var(--denim-900); }
+
+  .panel { padding: 24px; margin-bottom: 24px; }
+  .panel h3 { margin-bottom: 16px; }
+
+  .filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+  .filters-row .field { flex: 1 1 140px; margin-bottom: 0; }
+
+  .entry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 0.9rem;
+  }
+  .entry-row:last-child { border-bottom: none; }
+  .entry-main { display: flex; flex-direction: column; gap: 2px; }
+  .entry-desc { font-weight: 600; }
+  .entry-meta { color: var(--denim-500); font-size: 0.78rem; }
+  .entry-figures { display: flex; gap: 18px; align-items: center; }
+  .entry-figures .earned { color: var(--thread-gold-dark); font-weight: 700; }
+  .entry-figures .saved { color: var(--moss-dark); font-size: 0.82rem; }
+
+  #custom-category-field.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/" class="brand">Re<span class="stitch">Thread</span></a>
+  <div class="nav-links">
+    <a href="/locator.html" class="btn btn-outline btn-sm">Locator</a>
+    <span class="muted" id="username-label" style="margin: 0 6px;"></span>
+    <button class="btn btn-outline btn-sm" id="logout-btn">Log out</button>
+  </div>
+</nav>
+
+<div class="log-wrap">
+
+  <div class="totals-hero">
+    <div class="total-card earned">
+      <div class="eyebrow">Cumulative earned</div>
+      <div class="figure" id="total-earned">£0.00</div>
+      <div class="sub" id="trend-earned"></div>
+    </div>
+    <div class="total-card saved">
+      <div class="row" style="justify-content:space-between;">
+        <div class="eyebrow">Avoided impact
+          <span class="info-tip" tabindex="0">i
+            <span class="tip-bubble">
+              These are estimated avoided-impact figures: the gap between your item being reused/recycled
+              versus a new replacement being manufactured, based on WRAP UK's Textiles 2030 Annual Progress
+              Update 2022-23. They are not a direct measurement of your specific item.
+            </span>
+          </span>
+        </div>
+      </div>
+      <div class="figure" id="total-water">0 L water</div>
+      <div class="sub" id="total-co2">0 kg CO2e avoided</div>
+      <div class="sub" id="drinking-days" style="margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <div class="card panel">
+    <h3>Log an item</h3>
+    <form id="entry-form">
+      <div class="field-row">
+        <div class="field">
+          <label for="description">Item description</label>
+          <input type="text" id="description" placeholder="e.g. Blue denim jacket" required maxlength="200">
+        </div>
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category">
+            <option value="cotton_tshirt">Cotton t-shirt</option>
+            <option value="jeans">Jeans</option>
+            <option value="wool_sweater">Wool sweater</option>
+            <option value="synthetic_jacket">Synthetic jacket</option>
+            <option value="dress">Dress</option>
+            <option value="shoes">Shoes</option>
+            <option value="bedding_linens">Bedding / linens</option>
+            <option value="other">Other…</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field hidden" id="custom-category-field">
+          <label for="custom-category">Custom category name</label>
+          <input type="text" id="custom-category" maxlength="50">
+        </div>
+        <div class="field">
+          <label for="weight">Weight in kg (optional)</label>
+          <input type="number" id="weight" step="0.01" min="0.01" placeholder="Default: 0.2 kg">
+        </div>
+        <div class="field">
+          <label for="method">Method</label>
+          <select id="method">
+            <option value="resold">Resold</option>
+            <option value="recycled">Recycled</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="amount">Amount earned (optional)</label>
+          <input type="number" id="amount" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label for="payer">Who paid (optional)</label>
+          <input type="text" id="payer" placeholder="e.g. Oxfam, Textile Recyclers Ltd" maxlength="100">
+        </div>
+        <div class="field">
+          <label for="entry-date">Date</label>
+          <input type="date" id="entry-date">
+        </div>
+      </div>
+      <div id="entry-error"></div>
+      <button type="submit" class="btn btn-gold">Add to log</button>
+    </form>
+  </div>
+
+  <div class="card panel">
+    <h3>Your entries</h3>
+    <div class="filters-row">
+      <div class="field">
+        <label for="f-search">Search</label>
+        <input type="text" id="f-search" placeholder="Item or shop name">
+      </div>
+      <div class="field">
+        <label for="f-category">Category</label>
+        <select id="f-category">
+          <option value="">All</option>
+          <option value="cotton_tshirt">Cotton t-shirt</option>
+          <option value="jeans">Jeans</option>
+          <option value="wool_sweater">Wool sweater</option>
+          <option value="synthetic_jacket">Synthetic jacket</option>
+          <option value="dress">Dress</option>
+          <option value="shoes">Shoes</option>
+          <option value="bedding_linens">Bedding / linens</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-method">Method</label>
+        <select id="f-method">
+          <option value="">All</option>
+          <option value="resold">Resold</option>
+          <option value="recycled">Recycled</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-from">From</label>
+        <input type="date" id="f-from">
+      </div>
+      <div class="field">
+        <label for="f-to">To</label>
+        <input type="date" id="f-to">
+      </div>
+      <div class="field">
+        <label for="f-sort">Sort by</label>
+        <select id="f-sort">
+          <option value="date">Date</option>
+          <option value="amount_earned">Amount earned</option>
+          <option value="amount_saved">Amount saved</option>
+        </select>
+      </div>
+      <button class="btn btn-outline btn-sm" id="clear-filters-btn">Clear</button>
+    </div>
+    <div id="entries-list"></div>
+    <p class="muted center" id="empty-state" style="display:none; padding: 20px 0 4px;">No entries yet. Log your first item above.</p>
+  </div>
+
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/tracker.js"></script>
+</body>
+</html>
