@@ -3,8 +3,8 @@ import os
 from dotenv import load_dotenv
 
 # load_dotenv() won't override a variable that's already set in the shell
-# environment, so exported vars (e.g. from a systemd EnvironmentFile) always
-# win over whatever's in .env.
+# environment, so I can rely on exported vars (e.g. from a systemd
+# EnvironmentFile) always winning over whatever's in .env.
 load_dotenv()
 
 

@@ -19,8 +19,16 @@ jobs:
       - name: Set up deploy key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          # tr strips stray \r characters that can sneak in when a multi-line
+          # secret gets copy-pasted through Windows, which otherwise makes
+          # OpenSSH fail with a cryptic "error in libcrypto" instead of a
+          # clear "bad key" message.
+          printf '%s' "${{ secrets.DEPLOY_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || {
+            echo "::error::DEPLOY_SSH_KEY secret is not a valid private key. Re-copy it into the repo secret."
+            exit 1
+          }
           ssh-keyscan -H "$WEB01" "$WEB02" "$LB01" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Ship code to web-01 and web-02

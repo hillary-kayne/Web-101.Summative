@@ -11,7 +11,7 @@ PLACES_URL = "https://api.geoapify.com/v2/places"
 
 # Geoapify's OSM-backed places data has no single category that separates
 # charity shops from other second-hand/consignment stores, so both come back
-# under commercial.second_hand. We bucket by name after the fact (see
+# under commercial.second_hand. I bucket by name after the fact instead (see
 # _classify below). Drop-off points come back under service.recycling
 # (bins, containers, and staffed recycling centres alike).
 PLACES_CATEGORIES = "commercial.second_hand,service.recycling"

@@ -14,8 +14,8 @@ def geocode():
     if len(query) < 2:
         raise ApiError("Enter at least 2 characters to search for a city", 400)
     # geoapify_cache.cache_key is VARCHAR(255) and includes this query text
-    # ("geocode:" + query), so an overlong query would fail at the DB layer
-    # instead of with a clean validation error.
+    # ("geocode:" + query), so I cap it here rather than letting an overlong
+    # query fail at the DB layer with a confusing error.
     if len(query) > 200:
         raise ApiError("Search text must be 200 characters or fewer", 400)
     suggestions, stale = geocode_suggestions(query)

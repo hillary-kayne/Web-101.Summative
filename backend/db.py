@@ -13,9 +13,9 @@ _pool = None
 def get_pool():
     global _pool
     if _pool is None:
-        # 20 is comfortably above gunicorn's worker count (3, see
-        # deploy/rethread.service), so workers never starve each other for a
-        # connection under normal load.
+        # I picked 20 because it's comfortably above gunicorn's worker count
+        # (3, see deploy/rethread.service), so workers never starve each
+        # other for a connection under normal load.
         _pool = SimpleConnectionPool(1, 20, dsn=config.DATABASE_URL)
     return _pool
 
