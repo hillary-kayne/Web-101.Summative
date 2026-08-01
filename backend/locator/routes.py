@@ -13,6 +13,11 @@ def geocode():
     query = (request.args.get("q") or "").strip()
     if len(query) < 2:
         raise ApiError("Enter at least 2 characters to search for a city", 400)
+    # geoapify_cache.cache_key is VARCHAR(255) and includes this query text
+    # ("geocode:" + query), so an overlong query would fail at the DB layer
+    # instead of with a clean validation error.
+    if len(query) > 200:
+        raise ApiError("Search text must be 200 characters or fewer", 400)
     suggestions, stale = geocode_suggestions(query)
     if not suggestions:
         raise ApiError(f'No locations found matching "{query}". Try a different spelling or add a country.', 404)
@@ -26,6 +31,12 @@ def search():
         lon = float(request.args["lon"])
     except (KeyError, ValueError):
         raise ApiError("lat and lon query parameters are required and must be numeric", 400)
+    if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+        raise ApiError("lat must be between -90 and 90, lon between -180 and 180", 400)
+
+    label = request.args.get("label")
+    if label and len(label) > 200:
+        raise ApiError("label must be 200 characters or fewer", 400)
 
     radius_km = request.args.get("radius_km", "10")
     try:
@@ -44,7 +55,7 @@ def search():
     if sort_by not in ("distance", "rating"):
         raise ApiError("sort must be 'distance' or 'rating'", 400)
 
-    results, stale = search_places(lat, lon, radius_km, label=request.args.get("label"))
+    results, stale = search_places(lat, lon, radius_km, label=label)
 
     if types:
         results = [r for r in results if r["type"] in types]

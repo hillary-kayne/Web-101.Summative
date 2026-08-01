@@ -45,6 +45,10 @@ def list_entries(user_id, category=None, method=None, date_from=None, date_to=No
         clauses.append("(description ILIKE %(q)s OR payer_name ILIKE %(q)s)")
         params["q"] = f"%{q}%"
 
+    # sort_col/order_sql are interpolated directly rather than passed as query
+    # params because column/direction names can't be bound placeholders in
+    # psycopg2. Safe here only because both come from the fixed whitelists
+    # above (SORT_COLUMNS, the asc/desc check), never from raw user input.
     sort_col = SORT_COLUMNS.get(sort, "entry_date")
     order_sql = "ASC" if order == "asc" else "DESC"
 

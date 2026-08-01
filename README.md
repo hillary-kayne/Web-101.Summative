@@ -32,6 +32,22 @@ Let's Encrypt certificate that renews automatically.
 - **Accounts**: signup and login with hashed passwords and stateless JWT sessions, so either
   application server can handle any authenticated request.
 
+## APIs Used
+
+This project integrates with the [Geoapify](https://www.geoapify.com/) platform through two of its
+APIs, both proxied through this application's own backend so the API key is never exposed to the
+browser:
+
+| API | Provider endpoint | Used for | Called from |
+|---|---|---|---|
+| [Geocoding API](https://www.geoapify.com/geocoding-api/) | `GET api.geoapify.com/v1/geocode/search` | Turning a typed city name into candidate coordinates, with a picker for ambiguous matches | `GET /api/locator/geocode` |
+| [Places API](https://www.geoapify.com/places-api/) | `GET api.geoapify.com/v2/places` | Finding real recycling bins, charity shops, and second-hand stores within a radius of a point | `GET /api/locator/search` |
+
+Both calls are wrapped with Postgres-backed caching and a stale-cache fallback (see
+[Error Handling](#error-handling)), so a Geoapify outage degrades gracefully instead of breaking the
+locator entirely. Map tiles are rendered client-side with [Leaflet](https://leafletjs.com/) and
+[OpenStreetMap](https://www.openstreetmap.org/copyright) tiles, which require no API key.
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -208,9 +224,16 @@ project cites one specific source rather than presenting a number as universal f
 - Figures are rounded to one decimal place; the intent is directional education, not precise
   measurement.
 
-## Demo Video
+## Demo Video and Production Link
 
-[Add demo video link here]
+| | |
+|---|---|
+| **Production URL** | [https://www.hillaryco.tech/](https://www.hillaryco.tech/) |
+| **Demo video** | [Add demo video link here] |
+
+The video should walk through: searching the locator by city and by device location, filtering
+results by type/radius, logging an item in the tracker, and the resulting totals updating on the
+dashboard.
 
 ## Credits
 

@@ -15,6 +15,10 @@ def _validate_credentials(data):
         raise ApiError("Username must be 3-50 characters", 400)
     if len(password) < 6:
         raise ApiError("Password must be at least 6 characters", 400)
+    # bcrypt silently truncates at 72 bytes, so anything longer would hash
+    # identically to its first 72 bytes. Reject it outright instead.
+    if len(password.encode("utf-8")) > 72:
+        raise ApiError("Password must be 72 bytes or fewer", 400)
     return username, password
 
 

@@ -43,8 +43,12 @@ def create_entry(user_id, data):
     description = (data.get("description") or "").strip()
     if not description:
         raise ApiError("description is required", 400)
+    if len(description) > 200:
+        raise ApiError("description must be 200 characters or fewer", 400)
 
     category = (data.get("category") or "other").strip().lower().replace(" ", "_")
+    if len(category) > 50:
+        raise ApiError("category must be 50 characters or fewer", 400)
 
     method = (data.get("method") or "").strip().lower()
     if method not in ("resold", "recycled"):
@@ -63,6 +67,8 @@ def create_entry(user_id, data):
         amount_earned = 0.0
 
     payer_name = (data.get("payer_name") or "").strip() or None
+    if payer_name and len(payer_name) > 100:
+        raise ApiError("payer_name must be 100 characters or fewer", 400)
     entry_date = _parse_date(data.get("entry_date"))
 
     water_saved_l, co2_saved_kg = calc_impact(weight_kg, method)

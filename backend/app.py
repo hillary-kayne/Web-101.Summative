@@ -33,6 +33,9 @@ def create_app():
     @app.route("/", defaults={"path": "index.html"})
     @app.route("/<path:path>")
     def serve_frontend(path):
+        # This is a multi-page site, not an SPA, so this isn't a client-router
+        # catch-all. It just means a typoed URL lands on the homepage instead
+        # of a bare 404.
         full_path = os.path.join(FRONTEND_DIR, path)
         if not os.path.isfile(full_path):
             return send_from_directory(FRONTEND_DIR, "index.html")
@@ -41,6 +44,9 @@ def create_app():
     try:
         init_db()
     except Exception as exc:
+        # Don't crash the whole app if the DB is briefly unreachable at boot
+        # (e.g. gunicorn worker starting before the DB is warm); it'll retry
+        # per-request once a real connection is needed.
         app.logger.warning("DB init skipped/failed at startup: %s", exc)
 
     return app
