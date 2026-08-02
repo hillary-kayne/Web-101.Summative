@@ -229,7 +229,7 @@ project cites one specific source rather than presenting a number as universal f
 | | |
 |---|---|
 | **Production URL** | [https://www.hillaryco.tech/](https://www.hillaryco.tech/) |
-| **Demo video** | [Add demo video link here] |
+| **Demo video** | [(https://youtu.be/nyKHc0n_9hg)] |
 
 The video should walk through: searching the locator by city and by device location, filtering
 results by type/radius, logging an item in the tracker, and the resulting totals updating on the
